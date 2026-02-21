@@ -102,4 +102,23 @@
         };
         
         try {
-            await fetch(scriptURL
+            await fetch(scriptURL, { 
+                method: 'POST', 
+                mode: 'no-cors', // Essential for Google Apps Script
+                body: JSON.stringify(data),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            alert('Status Saved! The heatmap will update shortly.');
+        } catch (err) {
+            console.error(err);
+            alert('Update failed. Check your internet connection.');
+        } finally {
+            btn.innerText = "I'm Available";
+            btn.disabled = false;
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
