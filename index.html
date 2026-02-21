@@ -55,4 +55,157 @@
 </div>
 
 <div class="card action-panel">
-    <select id="user-
+    <select id="user-select">
+        <option value="Andy">👤 Andy</option>
+        <option value="Matt">👤 Matt</option>
+        <option value="Veronica">👤 Veronica</option>
+        <option value="Mike">👤 Mike</option>
+    </select>
+    
+    <div class="status-msg" id="status-label">Select dates on the calendar</div>
+    
+    <div class="btn-group">
+        <button class="btn btn-green" id="btn-avail" onclick="submitBulk('Available')">Mark Selected Free</button>
+        <button class="btn btn-red" id="btn-busy" onclick="submitBulk('Busy')">Mark Selected Busy</button>
+    </div>
+    <button class="btn-clear" onclick="clearSelection()">Clear Selection</button>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyFLidUKIB-efwm-CWNzed_00EsxK77U4Aks3sL_tXXdvBlmTz7TC0bxm-66YcpFI8QWA/exec'; 
+    const crew = ['Andy', 'Matt', 'Veronica', 'Mike'];
+    
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let selectedDates = new Set(); 
+    let globalData = [];
+
+    function renderCalendar() {
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('month-display').innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+
+        for(let i=0; i<firstDay; i++) grid.innerHTML += '<div></div>';
+
+        for(let d=1; d<=daysInMonth; d++) {
+            const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isSelected = selectedDates.has(dateStr) ? 'selected' : '';
+            grid.innerHTML += `
+                <div class="day ${isSelected}" id="day-${dateStr}" onclick="toggleDate('${dateStr}')">
+                    ${d}
+                    <div class="crew-dots">
+                        ${crew.map(name => `<div class="dot" id="dot-${name}-${dateStr}"></div>`).join('')}
+                    </div>
+                </div>`;
+        }
+        applyDataToGrid();
+    }
+
+    function toggleDate(dateStr) {
+        if (selectedDates.has(dateStr)) {
+            selectedDates.delete(dateStr);
+        } else {
+            selectedDates.add(dateStr);
+        }
+        updateUI();
+    }
+
+    function updateUI() {
+        // Update calendar visuals
+        document.querySelectorAll('.day').forEach(el => {
+            const dStr = el.id.replace('day-', '');
+            selectedDates.has(dStr) ? el.classList.add('selected') : el.classList.remove('selected');
+        });
+        
+        // Update label
+        const count = selectedDates.size;
+        document.getElementById('status-label').innerText = count > 0 ? `${count} dates selected` : "Select dates on the calendar";
+    }
+
+    function clearSelection() {
+        selectedDates.clear();
+        updateUI();
+    }
+
+    function changeMonth(dir) {
+        currentMonth += dir;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        renderCalendar();
+    }
+
+    async function fetchData() {
+        try {
+            const response = await fetch(scriptURL);
+            globalData = await response.json();
+            applyDataToGrid();
+        } catch (e) { console.log("Syncing..."); }
+    }
+
+    function applyDataToGrid() {
+        document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+        document.querySelectorAll('.day').forEach(d => d.classList.remove('perfect'));
+
+        const latestStatus = {};
+        globalData.forEach(entry => {
+            const cleanDate = entry.date.split('T')[0];
+            latestStatus[`${entry.name}-${cleanDate}`] = entry.status;
+        });
+
+        for (const [key, status] of Object.entries(latestStatus)) {
+            const [name, date] = key.split('-');
+            const dot = document.getElementById(`dot-${name}-${date}`);
+            if (dot && status === 'Available') dot.classList.add('active');
+        }
+
+        document.querySelectorAll('.day').forEach(dayBox => {
+            const activeDots = dayBox.querySelectorAll('.dot.active').length;
+            if (activeDots >= crew.length) dayBox.classList.add('perfect');
+        });
+    }
+
+    async function submitBulk(status) {
+        if (selectedDates.size === 0) return alert("Tap some dates first!");
+        
+        const user = document.getElementById('user-select').value;
+        const btn = status === 'Available' ? document.getElementById('btn-avail') : document.getElementById('btn-busy');
+        const originalText = btn.innerText;
+        
+        btn.innerText = "Syncing...";
+        btn.disabled = true;
+
+        // Process all selected dates
+        const dateArray = Array.from(selectedDates);
+        
+        try {
+            // We use Promise.all to send all dates to Google Sheets at once
+            await Promise.all(dateArray.map(dStr => 
+                fetch(scriptURL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ name: user, date: dStr, status: status }) 
+                })
+            ));
+            
+            selectedDates.clear();
+            updateUI();
+            setTimeout(fetchData, 1000);
+            alert(`Updated ${dateArray.length} dates for ${user}`);
+        } catch (e) {
+            alert("Error syncing. Check connection.");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    renderCalendar();
+    fetchData();
+    setInterval(fetchData, 10000);
+</script>
+</body>
+</html>
