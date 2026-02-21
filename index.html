@@ -3,50 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ShootSync | Pro Transparency</title>
+    <title>ShootSync | Pro Clarity</title>
     <style>
         :root { 
-            --bg: #0f172a; --surface: #1e293b; --text: #f8fafc; --muted: #64748b;
+            --bg: #0f172a; --surface: #1e293b; --text: #f8fafc; --muted: #94a3b8;
             --blue: #3b82f6; --green: #10b981; --red: #ef4444; --gold: #f59e0b;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 50px; }
-        .card { background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
+        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .nav-btn { background: var(--bg); color: var(--text); border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
-        h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+        .nav-btn { background: rgba(255,255,255,0.05); color: var(--text); border: none; padding: 12px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        h2 { margin: 0; font-size: 1.2rem; }
 
-        /* Calendar Grid */
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .day { aspect-ratio: 1/1; background: var(--bg); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 6px; font-size: 13px; position: relative; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .day.selected { border-color: var(--blue); background: rgba(59, 130, 246, 0.2); }
-        .day.perfect { border-color: var(--gold); }
-        .day.perfect::after { content: '★'; color: var(--gold); position: absolute; font-size: 10px; top: 2px; right: 4px; }
+        /* Calendar Styling */
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day { aspect-ratio: 1/1; background: var(--bg); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; position: relative; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .day.selected { border-color: var(--blue); background: rgba(59, 130, 246, 0.15); transform: translateY(-2px); }
+        .day.perfect { border-color: var(--gold); box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+        .day.perfect::after { content: '🎬'; position: absolute; top: -8px; right: -4px; font-size: 12px; }
         
-        /* Crew Dots */
-        .crew-dots { display: flex; gap: 2px; margin-top: auto; margin-bottom: 6px; flex-wrap: wrap; justify-content: center; width: 90%; }
-        .dot { width: 6px; height: 6px; border-radius: 50%; background: #334155; border: 1px solid rgba(255,255,255,0.05); }
-        .dot.free { background: var(--green); box-shadow: 0 0 4px var(--green); }
+        /* The Dots (The "At-a-glance" view) */
+        .dot-row { display: flex; gap: 3px; margin-top: 4px; }
+        .dot { width: 5px; height: 5px; border-radius: 50%; background: #334155; }
+        .dot.free { background: var(--green); box-shadow: 0 0 5px var(--green); }
         .dot.busy { background: var(--red); }
 
-        /* NEW: Legend Styles */
-        .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #334155; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .l-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-        /* Summary & Action Panels */
-        .summary-title { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
-        .crew-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .crew-item { display: flex; align-items: center; gap: 8px; font-size: 14px; background: var(--bg); padding: 8px; border-radius: 8px; }
-        .status-badge { width: 8px; height: 8px; border-radius: 50%; }
-
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        .btn-green { background: var(--green); color: white; }
-        .btn-red { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid var(--red); }
+        /* NEW: Crew Detail Section (The "Who is what" view) */
+        .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .date-title { font-weight: bold; color: var(--gold); font-size: 1.1rem; }
         
-        select { width: 100%; padding: 16px; border-radius: 12px; border: 1px solid var(--muted); background: var(--bg); color: var(--text); margin-bottom: 10px; font-size: 16px; appearance: none; }
+        .roster-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        .crew-row { display: flex; align-items: center; background: rgba(15, 23, 42, 0.5); padding: 12px 15px; border-radius: 12px; border-left: 4px solid #334155; }
+        .crew-row.is-free { border-left-color: var(--green); background: rgba(16, 185, 129, 0.05); }
+        .crew-row.is-busy { border-left-color: var(--red); background: rgba(239, 68, 68, 0.05); }
+        
+        .name-box { flex-grow: 1; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+        .status-pill { font-size: 10px; padding: 4px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+        .pill-free { background: var(--green); color: white; }
+        .pill-busy { background: var(--red); color: white; }
+        .pill-none { background: #334155; color: var(--muted); }
+
+        /* Action Buttons */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { padding: 18px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 15px; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-red { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 2px solid var(--red); }
+        select { width: 100%; padding: 18px; border-radius: 14px; border: 1px solid var(--muted); background: var(--bg); color: var(--text); font-size: 16px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -57,24 +60,20 @@
         <h2 id="month-display">...</h2>
         <button class="nav-btn" onclick="changeMonth(1)">❯</button>
     </div>
-    
     <div class="grid" id="calendar-grid"></div>
-
-    <div class="legend">
-        <div class="legend-item"><div class="l-dot" style="background:var(--green)"></div> Free</div>
-        <div class="legend-item"><div class="l-dot" style="background:var(--red)"></div> Busy</div>
-        <div class="legend-item"><div class="l-dot" style="background:#334155"></div> No Reply</div>
-        <div class="legend-item"><span style="color:var(--gold)">★</span> Shoot Ready</div>
-        <div class="legend-item"><div style="width:10px; height:10px; border:1px solid var(--blue); border-radius:2px"></div> Selected</div>
-    </div>
 </div>
 
-<div class="card" id="detail-card">
-    <span class="summary-title" id="detail-date-label">Tap a date to see crew status</span>
-    <div class="crew-list" id="detail-roster"></div>
+<div class="card" id="detail-section">
+    <div class="detail-header">
+        <div class="date-title" id="selected-date-text">Tap a date</div>
+        <div id="perfect-badge"></div>
+    </div>
+    <div class="roster-grid" id="crew-roster">
+        </div>
 </div>
 
 <div class="card">
+    <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; text-align: center;">UPDATING AS:</div>
     <select id="user-select">
         <option value="Andy">👤 Andy</option>
         <option value="Matt">👤 Matt</option>
@@ -82,14 +81,14 @@
         <option value="Mike">👤 Mike</option>
     </select>
     <div class="btn-group">
-        <button class="btn btn-green" onclick="submitBulk('Available')">Confirm Free</button>
-        <button class="btn btn-red" onclick="submitBulk('Busy')">Mark Busy</button>
+        <button class="btn btn-green" onclick="submitBulk('Available')">I'M FREE</button>
+        <button class="btn btn-red" onclick="submitBulk('Busy')">I'M BUSY</button>
     </div>
-    <center><button style="background:none; border:none; color:var(--muted); margin-top:15px; text-decoration:underline; cursor:pointer;" onclick="clearSelection()">Deselect All</button></center>
+    <button style="width: 100%; background: none; border: none; color: var(--muted); margin-top: 15px; text-decoration: underline; cursor:pointer;" onclick="clearSelection()">Clear Selection</button>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzpYdufc-OSbBTHbk5-1rItoe08n1ojVHXmCVhlgYBxbL9SQlrI01OdCzAm4xkmJM4twg/exec'; 
+    const scriptURL = 'YOUR_SCRIPT_URL_HERE'; // <--- PASTE YOUR /exec URL HERE
     const crew = ['Andy', 'Matt', 'Veronica', 'Mike'];
     
     let currentMonth = new Date().getMonth();
@@ -113,7 +112,7 @@
             grid.innerHTML += `
                 <div class="day" id="day-${dateStr}" onclick="toggleDate('${dateStr}')">
                     ${d}
-                    <div class="crew-dots">
+                    <div class="dot-row">
                         ${crew.map(name => `<div class="dot" id="dot-${name}-${dateStr}"></div>`).join('')}
                     </div>
                 </div>`;
@@ -125,7 +124,7 @@
         if (selectedDates.has(dateStr)) selectedDates.delete(dateStr);
         else selectedDates.add(dateStr);
         
-        showDayDetail(dateStr);
+        updateDetails(dateStr);
         
         document.querySelectorAll('.day').forEach(el => {
             const d = el.id.replace('day-', '');
@@ -133,19 +132,32 @@
         });
     }
 
-    function showDayDetail(dateStr) {
-        document.getElementById('detail-date-label').innerText = `Crew Status: ${dateStr}`;
-        const roster = document.getElementById('detail-roster');
+    function updateDetails(dateStr) {
+        document.getElementById('selected-date-text').innerText = dateStr;
+        const roster = document.getElementById('crew-roster');
+        
+        let freeCount = 0;
+
         roster.innerHTML = crew.map(name => {
-            const status = latestStatuses[`${name}-${dateStr}`] || 'No Reply';
-            const color = status === 'Available' ? 'var(--green)' : (status === 'Busy' ? 'var(--red)' : '#334155');
+            const status = latestStatuses[`${name}-${dateStr}`] || 'None';
+            const isFree = status === 'Available';
+            const isBusy = status === 'Busy';
+            if(isFree) freeCount++;
+
             return `
-                <div class="crew-item">
-                    <div class="status-badge" style="background:${color}"></div>
-                    <span>${name}</span>
-                    <span style="font-size:10px; color:var(--muted); margin-left:auto">${status}</span>
+                <div class="crew-row ${isFree ? 'is-free' : (isBusy ? 'is-busy' : '')}">
+                    <div class="name-box">
+                        ${isFree ? '✅' : (isBusy ? '❌' : '🔘')} 
+                        ${name}
+                    </div>
+                    <div class="status-pill ${isFree ? 'pill-free' : (isBusy ? 'pill-busy' : 'pill-none')}">
+                        ${status === 'Available' ? 'Free' : (status === 'Busy' ? 'Busy' : 'No Reply')}
+                    </div>
                 </div>`;
         }).join('');
+
+        const badge = document.getElementById('perfect-badge');
+        badge.innerHTML = (freeCount === 4) ? '<span style="color:var(--gold); font-weight:bold;">🌟 READY TO SHOOT</span>' : '';
     }
 
     async function fetchData() {
@@ -153,12 +165,11 @@
             const response = await fetch(scriptURL);
             globalData = await response.json();
             applyDataToGrid();
-        } catch (e) { console.log("Background Syncing..."); }
+        } catch (e) { console.log("Syncing..."); }
     }
 
     function applyDataToGrid() {
         document.querySelectorAll('.dot').forEach(d => { d.className = 'dot'; });
-        
         latestStatuses = {};
         globalData.forEach(entry => {
             const cleanDate = entry.date.split('T')[0];
@@ -195,14 +206,16 @@
     }
 
     async function submitBulk(status) {
-        if (selectedDates.size === 0) return alert("Select some dates first!");
+        if (selectedDates.size === 0) return alert("Tap some dates first!");
         const user = document.getElementById('user-select').value;
         const datesToProcess = Array.from(selectedDates);
 
+        // UI Optimistic Update
         datesToProcess.forEach(dStr => {
             latestStatuses[`${user}-${dStr}`] = status;
             const dot = document.getElementById(`dot-${user}-${dStr}`);
             if(dot) dot.className = 'dot ' + (status === 'Available' ? 'free' : 'busy');
+            updateDetails(dStr);
         });
 
         clearSelection();
@@ -211,12 +224,12 @@
                 fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: user, date: dStr, status: status }) })
             ));
             fetchData();
-        } catch (e) { alert("Error updating Sheet."); }
+        } catch (e) { alert("Network error."); }
     }
 
     renderCalendar();
     fetchData();
-    setInterval(fetchData, 20000); // Sync every 20 seconds
+    setInterval(fetchData, 20000);
 </script>
 </body>
 </html>
