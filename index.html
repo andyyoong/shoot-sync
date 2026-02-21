@@ -5,120 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ShootSync | Production Portal</title>
     <style>
-        :root { --blue: #007aff; --green: #34c759; --red: #ff3b30; --gold: #ffcc00; --dark: #1c1c1e; }
-        body { font-family: -apple-system, sans-serif; background: #f2f2f7; margin: 0; padding: 15px; color: var(--dark); }
+        :root { --blue: #007aff; --green: #34c759; --red: #ff3b30; --gold: #ffcc00; --dark: #1c1c1e; --gray: #8e8e93; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f2f2f7; margin: 0; padding: 15px; color: var(--dark); }
         .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
         h2 { font-size: 1.2rem; margin: 0 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Availability Heatmap */
+        /* Calendar Grid */
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-        .day { aspect-ratio: 1/1; background: #fff; border: 1px solid #e5e5ea; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; transition: 0.2s; }
-        .day:active { transform: scale(0.95); }
-        .perfect { background: var(--gold); border-color: #f59e0b; font-weight: bold; }
-        .booked { background: #e3f9e5; border-color: var(--green); }
+        .day { aspect-ratio: 1/1; background: #fff; border: 1px solid #e5e5ea; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; position: relative; transition: 0.2s; }
+        .perfect { background: var(--gold) !important; border-color: #f59e0b; font-weight: bold; }
         
-        .crew-dots { display: flex; gap: 2px; margin-top: 4px; }
-        .dot { width: 5px; height: 5px; border-radius: 50%; background: #ddd; }
-        .dot.free { background: var(--green); }
+        .crew-dots { display: flex; gap: 2px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: #ddd; border: 1px solid rgba(0,0,0,0.05); }
+        .dot.active { background: var(--green); }
 
-        /* Input Styles */
-        .input-group { display: flex; flex-direction: column; gap: 10px; }
-        select, input, .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; appearance: none; }
-        select, input { background: #f2f2f7; color: var(--dark); }
-        .btn { background: var(--blue); color: white; font-weight: 600; cursor: pointer; margin-top: 5px; }
-        
-        /* Brief Section */
-        .brief-item { border-left: 3px solid var(--blue); padding-left: 12px; margin-bottom: 15px; }
-        .brief-label { font-size: 10px; text-transform: uppercase; color: #8e8e93; font-weight: bold; }
-        .brief-val { font-size: 14px; font-weight: 500; }
+        /* Controls */
+        select, input, .btn { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; }
+        .btn { background: var(--blue); color: white; font-weight: 600; border: none; cursor: pointer; margin-bottom: 5px; }
+        .btn-red { background: white; color: var(--red); border: 1px solid var(--red); margin-top: 5px; }
+        .btn:disabled { opacity: 0.5; }
+
+        .legend { display: flex; gap: 10px; font-size: 10px; color: var(--gray); margin-top: 10px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Shoot Planner 🎥 <span style="font-size: 14px; color: var(--blue);">Feb 2026</span></h2>
-    <div class="grid" id="calendar"></div>
+    <h2 id="month-display">February 2026</h2>
+    <div class="grid" id="calendar-grid"></div>
+    <div class="legend">
+        <div class="legend-item"><div class="dot active"></div> Free</div>
+        <div class="legend-item"><div class="dot"></div> Busy</div>
+        <div class="legend-item"><span style="color:orange">★</span> Shoot Ready</div>
+    </div>
 </div>
 
 <div class="card">
-    <h2>Update Status</h2>
-    <div class="input-group">
-        <select id="user-select">
-            <option>Andy</option>
-            <option>Matt</option>
-            <option>Veronica</option>
-            <option>Mike</option>
-        </select>
-        <input type="date" id="date-input">
-        <button class="btn" onclick="submitStatus()">I'm Available</button>
-    </div>
-</div>
-
-<div class="card" id="project-brief">
-    <h2>Project Brief</h2>
-    <div class="brief-item">
-        <div class="brief-label">Location</div>
-        <div class="brief-val">Studio B / Downtown Exterior</div>
-    </div>
-    <div class="brief-item">
-        <div class="brief-label">Kit List</div>
-        <div class="brief-val">Arri Alexa Mini, Ronin 2, Aputure 600d x3</div>
-    </div>
-    <div class="brief-item">
-        <div class="brief-label">Note</div>
-        <div class="brief-val">High-speed shoot. Everyone bring weather gear.</div>
-    </div>
+    <h2>My Status</h2>
+    <select id="user-select">
+        <option value="Andy">Andy</option>
+        <option value="Matt">Matt</option>
+        <option value="Veronica">Veronica</option>
+        <option value="Mike">Mike</option>
+    </select>
+    <input type="date" id="date-input">
+    <button class="btn" id="submit-btn" onclick="updateStatus('Available')">I'm Available</button>
+    <button class="btn btn-red" id="remove-btn" onclick="updateStatus('Busy')">Mark as Busy/Remove</button>
 </div>
 
 <script>
-    // YOUR UPDATED GOOGLE SCRIPT URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbw5tXqEAHCa66p_5n93ay61DKVzn320GTwt1AI5pjaqWu7UQJGBfb8Y3XtJaSWeeh0l/exec';
+    const crew = ['Andy', 'Matt', 'Veronica', 'Mike'];
 
-    function init() {
-        const cal = document.getElementById('calendar');
-        for(let i=1; i<=28; i++) {
-            // Simulated Perfect Date Logic (Feb 24th)
-            let isPerfect = (i === 24) ? 'perfect' : '';
-            cal.innerHTML += `
-                <div class="day ${isPerfect}">
-                    ${i}
+    function initCalendar() {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('month-display').innerText = `${monthNames[month]} ${year}`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+
+        for(let i=0; i<firstDay; i++) grid.innerHTML += '<div></div>';
+
+        for(let d=1; d<=daysInMonth; d++) {
+            // Create a standardized ID like 2026-02-01
+            const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            grid.innerHTML += `
+                <div class="day" id="date-${dateStr}">
+                    ${d}
                     <div class="crew-dots">
-                        <div class="dot free"></div><div class="dot free"></div>
-                        <div class="dot ${isPerfect ? 'free' : ''}"></div><div class="dot ${isPerfect ? 'free' : ''}"></div>
+                        ${crew.map(name => `<div class="dot" id="dot-${name}-${dateStr}" title="${name}"></div>`).join('')}
                     </div>
                 </div>`;
         }
+        fetchData();
     }
 
-    async function submitStatus() {
-        const btn = document.querySelector('.btn');
+    async function fetchData() {
+        try {
+            const response = await fetch(scriptURL);
+            const data = await response.json();
+            
+            // Clear all dots first
+            document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.day').forEach(d => d.classList.remove('perfect'));
+
+            data.forEach(entry => {
+                // Ensure date format matches yyyy-mm-dd
+                const cleanDate = entry.date.split('T')[0]; 
+                const dotId = `dot-${entry.name}-${cleanDate}`;
+                const dot = document.getElementById(dotId);
+                
+                if (dot) {
+                    if (entry.status === 'Available') {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                }
+
+                // Check for "Perfect" day (all 4 crew available)
+                const dayBox = document.getElementById(`date-${cleanDate}`);
+                if (dayBox) {
+                    const activeCount = dayBox.querySelectorAll('.dot.active').length;
+                    if (activeCount >= crew.length) {
+                        dayBox.classList.add('perfect');
+                    }
+                }
+            });
+        } catch (e) {
+            console.log("Syncing...");
+        }
+    }
+
+    async function updateStatus(status) {
+        const btn = document.getElementById('submit-btn');
+        const user = document.getElementById('user-select').value;
+        const date = document.getElementById('date-input').value;
+
+        if (!date) return alert("Please select a date first!");
+
         btn.innerText = "Syncing...";
         btn.disabled = true;
 
-        const data = {
-            name: document.getElementById('user-select').value,
-            date: document.getElementById('date-input').value,
-            status: 'Available'
-        };
-        
+        const payload = { name: user, date: date, status: status };
+
         try {
             await fetch(scriptURL, { 
                 method: 'POST', 
-                mode: 'no-cors', // Essential for Google Apps Script
-                body: JSON.stringify(data),
-                headers: { 'Content-Type': 'application/json' }
+                mode: 'no-cors', 
+                body: JSON.stringify(payload) 
             });
-            alert('Status Saved! The heatmap will update shortly.');
-        } catch (err) {
-            console.error(err);
-            alert('Update failed. Check your internet connection.');
+            setTimeout(fetchData, 1500); // Refresh UI after a short delay
+            alert(`${user} marked as ${status} for ${date}`);
+        } catch (e) {
+            alert("Error updating status.");
         } finally {
             btn.innerText = "I'm Available";
             btn.disabled = false;
         }
     }
 
-    init();
+    initCalendar();
+    setInterval(fetchData, 8000); // Auto-refresh every 8 seconds
 </script>
+
 </body>
 </html>
