@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ShootSync | Production Portal</title>
+    <style>
+        :root { --blue: #007aff; --green: #34c759; --red: #ff3b30; --gold: #ffcc00; --dark: #1c1c1e; }
+        body { font-family: -apple-system, sans-serif; background: #f2f2f7; margin: 0; padding: 15px; color: var(--dark); }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        h2 { font-size: 1.2rem; margin: 0 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Availability Heatmap */
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day { aspect-ratio: 1/1; background: #fff; border: 1px solid #e5e5ea; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; transition: 0.2s; }
+        .day:active { transform: scale(0.95); }
+        .perfect { background: var(--gold); border-color: #f59e0b; font-weight: bold; }
+        .booked { background: #e3f9e5; border-color: var(--green); }
+        
+        .crew-dots { display: flex; gap: 2px; margin-top: 4px; }
+        .dot { width: 5px; height: 5px; border-radius: 50%; background: #ddd; }
+        .dot.free { background: var(--green); }
+
+        /* Input Styles */
+        .input-group { display: flex; flex-direction: column; gap: 10px; }
+        select, input, .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; appearance: none; }
+        select, input { background: #f2f2f7; color: var(--dark); }
+        .btn { background: var(--blue); color: white; font-weight: 600; cursor: pointer; margin-top: 5px; }
+        
+        /* Brief Section */
+        .brief-item { border-left: 3px solid var(--blue); padding-left: 12px; margin-bottom: 15px; }
+        .brief-label { font-size: 10px; text-transform: uppercase; color: #8e8e93; font-weight: bold; }
+        .brief-val { font-size: 14px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Shoot Planner 🎥 <span style="font-size: 14px; color: var(--blue);">Feb 2026</span></h2>
+    <div class="grid" id="calendar"></div>
+</div>
+
+<div class="card">
+    <h2>Update Status</h2>
+    <div class="input-group">
+        <select id="user-select">
+            <option>Andy</option>
+            <option>Matt</option>
+            <option>Veronica</option>
+            <option>Mike</option>
+        </select>
+        <input type="date" id="date-input">
+        <button class="btn" onclick="submitStatus()">I'm Available</button>
+    </div>
+</div>
+
+<div class="card" id="project-brief">
+    <h2>Project Brief</h2>
+    <div class="brief-item">
+        <div class="brief-label">Location</div>
+        <div class="brief-val">Studio B / Downtown Exterior</div>
+    </div>
+    <div class="brief-item">
+        <div class="brief-label">Kit List</div>
+        <div class="brief-val">Arri Alexa Mini, Ronin 2, Aputure 600d x3</div>
+    </div>
+    <div class="brief-item">
+        <div class="brief-label">Note</div>
+        <div class="brief-val">High-speed shoot. Everyone bring weather gear.</div>
+    </div>
+</div>
+
+<script>
+    // YOUR UPDATED GOOGLE SCRIPT URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5tXqEAHCa66p_5n93ay61DKVzn320GTwt1AI5pjaqWu7UQJGBfb8Y3XtJaSWeeh0l/exec';
+
+    function init() {
+        const cal = document.getElementById('calendar');
+        for(let i=1; i<=28; i++) {
+            // Simulated Perfect Date Logic (Feb 24th)
+            let isPerfect = (i === 24) ? 'perfect' : '';
+            cal.innerHTML += `
+                <div class="day ${isPerfect}">
+                    ${i}
+                    <div class="crew-dots">
+                        <div class="dot free"></div><div class="dot free"></div>
+                        <div class="dot ${isPerfect ? 'free' : ''}"></div><div class="dot ${isPerfect ? 'free' : ''}"></div>
+                    </div>
+                </div>`;
+        }
+    }
+
+    async function submitStatus() {
+        const btn = document.querySelector('.btn');
+        btn.innerText = "Syncing...";
+        btn.disabled = true;
+
+        const data = {
+            name: document.getElementById('user-select').value,
+            date: document.getElementById('date-input').value,
+            status: 'Available'
+        };
+        
+        try {
+            await fetch(scriptURL
