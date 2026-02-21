@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ShootSync | Pro</title>
+    <title>ShootSync | Pro Bulk</title>
     <style>
         :root { 
             --bg: #0f172a; --surface: #1e293b; --text: #f8fafc; --muted: #64748b;
@@ -12,35 +12,32 @@
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .card { background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         
-        /* Header & Navigation */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .nav-btn { background: var(--bg); color: var(--text); border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        .nav-btn:hover { background: var(--muted); }
         h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
 
-        /* Calendar Grid */
         .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .day { aspect-ratio: 1/1; background: var(--bg); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 8px; font-size: 14px; position: relative; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .day:hover { border-color: var(--muted); }
-        .day.selected { border-color: var(--blue); background: rgba(59, 130, 246, 0.1); }
+        
+        /* Selection Styles */
+        .day.selected { border-color: var(--blue); background: rgba(59, 130, 246, 0.25); transform: scale(0.95); }
         .day.perfect { border-color: var(--gold); background: rgba(245, 158, 11, 0.1); }
         .day.perfect::after { content: '★'; color: var(--gold); position: absolute; font-size: 10px; top: 2px; right: 4px; }
         
-        /* Crew Dots */
         .crew-dots { display: flex; gap: 3px; margin-top: auto; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; width: 80%; }
         .dot { width: 6px; height: 6px; border-radius: 50%; background: #334155; }
         .dot.active { background: var(--green); }
 
-        /* Action Panel */
         .action-panel { display: flex; flex-direction: column; gap: 12px; }
         select { width: 100%; padding: 16px; border-radius: 12px; border: 1px solid var(--muted); background: var(--bg); color: var(--text); font-size: 16px; }
         .btn-group { display: flex; gap: 10px; }
-        .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.96); }
+        .btn { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; }
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid var(--red); }
-        .selected-date-label { font-size: 14px; color: var(--gold); text-align: center; font-weight: 500; height: 20px;}
+        .btn-clear { background: transparent; color: var(--muted); font-size: 12px; text-decoration: underline; margin-top: 5px; cursor: pointer; border: none; }
+        
+        .status-msg { font-size: 14px; color: var(--gold); text-align: center; min-height: 20px; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -58,154 +55,4 @@
 </div>
 
 <div class="card action-panel">
-    <select id="user-select">
-        <option value="Andy">👤 Andy</option>
-        <option value="Matt">👤 Matt</option>
-        <option value="Veronica">👤 Veronica</option>
-        <option value="Mike">👤 Mike</option>
-    </select>
-    
-    <div class="selected-date-label" id="date-label">Tap a date on the calendar above</div>
-    
-    <div class="btn-group">
-        <button class="btn btn-green" id="btn-avail" onclick="submitStatus('Available')">Free</button>
-        <button class="btn btn-red" id="btn-busy" onclick="submitStatus('Busy')">Busy</button>
-    </div>
-</div>
-
-<script>
-    // --- SETUP ---
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyFLidUKIB-efwm-CWNzed_00EsxK77U4Aks3sL_tXXdvBlmTz7TC0bxm-66YcpFI8QWA/exec'; 
-    const crew = ['Andy', 'Matt', 'Veronica', 'Mike'];
-    
-    // --- STATE ---
-    let currentDate = new Date();
-    let currentMonth = currentDate.getMonth();
-    let currentYear = currentDate.getFullYear();
-    let selectedDateStr = null;
-    let globalData = [];
-
-    // --- CALENDAR LOGIC ---
-    function renderCalendar() {
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        document.getElementById('month-display').innerText = `${monthNames[currentMonth]} ${currentYear}`;
-
-        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const grid = document.getElementById('calendar-grid');
-        grid.innerHTML = '';
-
-        // Empty slots
-        for(let i=0; i<firstDay; i++) grid.innerHTML += '<div></div>';
-
-        // Days
-        for(let d=1; d<=daysInMonth; d++) {
-            const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            grid.innerHTML += `
-                <div class="day" id="day-${dateStr}" onclick="selectDate('${dateStr}')">
-                    ${d}
-                    <div class="crew-dots">
-                        ${crew.map(name => `<div class="dot" id="dot-${name}-${dateStr}" title="${name}"></div>`).join('')}
-                    </div>
-                </div>`;
-        }
-        
-        // Re-apply data and selection when month changes
-        applyDataToGrid();
-        if(selectedDateStr) selectDate(selectedDateStr, true);
-    }
-
-    function changeMonth(dir) {
-        currentMonth += dir;
-        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-        renderCalendar();
-    }
-
-    function selectDate(dateStr, isSilent = false) {
-        document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
-        const dayEl = document.getElementById(`day-${dateStr}`);
-        if(dayEl) dayEl.classList.add('selected');
-        
-        selectedDateStr = dateStr;
-        document.getElementById('date-label').innerText = `Editing: ${dateStr}`;
-        
-        if(!isSilent) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-
-    // --- DATA LOGIC ---
-    async function fetchData() {
-        try {
-            const response = await fetch(scriptURL);
-            globalData = await response.json();
-            applyDataToGrid();
-        } catch (e) { console.log("Background sync..."); }
-    }
-
-    function applyDataToGrid() {
-        // Clear old state
-        document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
-        document.querySelectorAll('.day').forEach(d => d.classList.remove('perfect'));
-
-        // Since data comes chronologically, the LAST entry for a person/date overwrites previous ones
-        const latestStatus = {};
-        globalData.forEach(entry => {
-            const cleanDate = entry.date.split('T')[0];
-            latestStatus[`${entry.name}-${cleanDate}`] = entry.status;
-        });
-
-        // Apply to UI
-        for (const [key, status] of Object.entries(latestStatus)) {
-            const [name, date] = key.split('-');
-            const dot = document.getElementById(`dot-${name}-${date}`);
-            if (dot && status === 'Available') dot.classList.add('active');
-        }
-
-        // Check for Perfect overlap
-        document.querySelectorAll('.day').forEach(dayBox => {
-            const activeDots = dayBox.querySelectorAll('.dot.active').length;
-            if (activeDots >= crew.length) dayBox.classList.add('perfect');
-        });
-    }
-
-    async function submitStatus(status) {
-        if (!selectedDateStr) return alert("Please tap a date on the calendar first!");
-        
-        const user = document.getElementById('user-select').value;
-        const btn = status === 'Available' ? document.getElementById('btn-avail') : document.getElementById('btn-busy');
-        
-        const originalText = btn.innerText;
-        btn.innerText = "Syncing...";
-        
-        // Optimistic UI Update (feels instant to the user)
-        const dot = document.getElementById(`dot-${user}-${selectedDateStr}`);
-        if(dot) {
-            if (status === 'Available') {
-                dot.classList.add('active');
-            } else {
-                dot.classList.remove('active');
-            }
-        }
-
-        try {
-            await fetch(scriptURL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ name: user, date: selectedDateStr, status: status }) 
-            });
-            setTimeout(fetchData, 1000); 
-        } catch (e) {
-            alert("Network error, please try again.");
-        } finally {
-            btn.innerText = originalText;
-        }
-    }
-
-    // --- START ---
-    renderCalendar();
-    fetchData();
-    setInterval(fetchData, 8000);
-</script>
-
-</body>
-</html>
+    <select id="user-
